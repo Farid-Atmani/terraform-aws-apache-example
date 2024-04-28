@@ -74,12 +74,20 @@ data "aws_ami" "amazon-linux" {
 	}
 }
 
+data "aws_subnets" "subnet_ids" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.main.id]
+  }
+}
+
 resource "aws_instance" "my_server" {
-  ami           = "${data.aws_ami.amazon-linux.id}"
-  instance_type = var.instance_type
-	key_name = "${aws_key_pair.deployer.key_name}"
+  ami                    = "${data.aws_ami.amazon-linux.id}"
+  subnet_id              = tolist(data.aws_subnets.subnet_ids.ids)[0]
+  instance_type          = var.instance_type
+	key_name               = "${aws_key_pair.deployer.key_name}"
 	vpc_security_group_ids = [aws_security_group.sg_my_server.id]
-	user_data = data.template_file.user_data.rendered
+	user_data              = data.template_file.user_data.rendered
 
   tags = {
     Name = var.server_name
